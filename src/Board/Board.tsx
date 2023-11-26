@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import './Board.scss';
 import { Cell } from '../Cell';
 import { ICell } from '../types/cell';
+import { checkAheadAndBehind, checkBombsInRightAndLeft, checkForBombs } from './checkers';
 
 const countOfCells = 252;
 
@@ -46,22 +47,19 @@ const setValue = (cellsToField: ICell[], index: number): ICell[] => {
   const cellsArray = cellsToField;
   let bombCount = 0;
 
-  if (cellsToField[index - 1].hasBomb) {
-    bombCount += 1;
-  }
-
-  if (cellsArray[index + 1].hasBomb) {
-    bombCount += 1;
-  }
+  bombCount = checkBombsInRightAndLeft({
+    cellsArray,
+    index,
+    bombCount,
+  });
 
   for (let i = 17; i < 20; i++) {
-    if (cellsArray[index + i].hasBomb) {
-      bombCount += 1;
-    }
-
-    if (cellsArray[index - i].hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkAheadAndBehind({
+      cellsArray,
+      index,
+      bombCount,
+      payload: i,
+    });
   }
 
   cellsArray[index].value = bombCount;
@@ -90,44 +88,66 @@ const checkForBombsInNotFullRoundedCells = ({
     return countBomb;
   }
 
-  if (cellsArray[index + 18]?.hasBomb) {
-    countBomb += 1;
-  }
-
-  if (cellsArray[index - 18]?.hasBomb) {
-    countBomb += 1;
-  }
+  countBomb = checkAheadAndBehind({
+    cellsArray,
+    index,
+    bombCount: countBomb,
+    payload: 18,
+  });
 
   switch (side) {
     case 'right': {
-      if (cellsArray[index - 17]?.hasBomb) {
-        countBomb += 1;
-      }
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'decrement',
+        payload: 17,
+      });
 
-      if (cellsArray[index + 19]?.hasBomb) {
-        countBomb += 1;
-      }
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'increment',
+        payload: 19,
+      });
 
-      if (cellsArray[index + 1]?.hasBomb) {
-        countBomb += 1;
-      }
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'increment',
+        payload: 1,
+      });
 
       break;
     }
 
     case 'left': {
-      if (cellsArray[index + 17]?.hasBomb) {
-        countBomb += 1;
-      }
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'increment',
+        payload: 17,
+      });
 
-      if (cellsArray[index - 19]?.hasBomb) {
-        countBomb += 1;
-      }
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'decrement',
+        payload: 19,
+      });
 
-      if (cellsArray[index - 1]?.hasBomb) {
-        countBomb += 1;
-      }
-
+      countBomb = checkForBombs({
+        cellsArray,
+        index,
+        bombCount: countBomb,
+        action: 'decrement',
+        payload: 1,
+      });
       break;
     }
 
@@ -144,18 +164,20 @@ const setValueForNotFullRounded = (cellsToField: ICell[], index: number): ICell[
   let oneTwo = false;
 
   if (toFullRoundCellsIndexes.slice(1, 17).includes(index)) {
-    if (cellsArray[index + 1].hasBomb) {
-      bombCount += 1;
-    }
-
-    if (cellsArray[index - 1].hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkBombsInRightAndLeft({
+      cellsArray,
+      index,
+      bombCount,
+    });
 
     for (let i = 17; i < 20; i++) {
-      if (cellsArray[index + i].hasBomb) {
-        bombCount += 1;
-      }
+      bombCount = checkForBombs({
+        cellsArray,
+        index,
+        bombCount,
+        action: 'increment',
+        payload: i,
+      });
     }
   }
 
@@ -187,61 +209,100 @@ const setValueForNotFullRounded = (cellsToField: ICell[], index: number): ICell[
     });
 
   if (toFullRoundCellsIndexes.slice(toFullRoundCellsIndexes.length - 18, toFullRoundCellsIndexes.length - 2).includes(index)) {
-    if (cellsArray[index + 1]?.hasBomb) {
-      bombCount += 1;
-    }
-
-    if (cellsArray[index - 1]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkAheadAndBehind({
+      cellsArray,
+      index,
+      bombCount,
+      payload: 1,
+    });
 
     for (let i = 17; i < 20; i++) {
-      if (cellsArray[index - i]?.hasBomb) {
-        bombCount += 1;
-      }
+      bombCount = checkForBombs({
+        cellsArray,
+        index,
+        bombCount,
+        action: 'decrement',
+        payload: i,
+      });
     }
   }
 
   if (cellsArray[0].id === index) {
-    if (cellsArray[index + 1]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'increment',
+      payload: 1,
+    });
 
-    if (cellsArray[index + 18]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'increment',
+      payload: 18,
+    });
 
-    if (cellsArray[index + 19]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'increment',
+      payload: 19,
+    });
   }
 
   if (cellsArray[cellsArray.length - 1].id === index) {
-    if (cellsArray[index - 1]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'decrement',
+      payload: 1,
+    });
 
-    if (cellsArray[index - 18]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'decrement',
+      payload: 18,
+    });
 
-    if (cellsArray[index - 19]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'decrement',
+      payload: 19,
+    });
   }
 
   if (cellsArray[cellsArray.length - 18].id === index) {
-    if (cellsArray[index + 1]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'increment',
+      payload: 1,
+    });
 
-    if (cellsArray[index - 18]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'decrement',
+      payload: 18,
+    });
 
-    if (cellsArray[index - 17]?.hasBomb) {
-      bombCount += 1;
-    }
+    bombCount = checkForBombs({
+      cellsArray,
+      index,
+      bombCount,
+      action: 'decrement',
+      payload: 17,
+    });
   }
 
   cellsArray[index].value = bombCount;

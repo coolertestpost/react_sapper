@@ -57,11 +57,11 @@ export const Cell: React.FC<Props> = ({ cellData, onGameOver, gameOver }) => {
         }
       }}
     >
-      {opened && cellData.hasBomb ? (
+      {opened && !flag && cellData.hasBomb ? (
         <span className="icon">
           <i className="fa-solid fa-bomb fa-shake" />
         </span>
-      ) : flag ? <i className="fa-solid fa-flag" style={{ color: 'red' }} /> : opened && <span>{cellData.value}</span>}
+      ) : flag && opened && !cellData.hasBomb ? <i className="fa-solid fa-xmark" style={{ color: 'ff0000', fontSize: 30 }} /> : flag ? <i className="fa-solid fa-flag" style={{ color: 'red' }} /> : opened && <span>{cellData.value}</span>}
     </div>
   );
 };
